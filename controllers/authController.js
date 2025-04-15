@@ -117,14 +117,17 @@ const login = async (req, res) => {
     await user.save({ validateBeforeSave: false }); // Skip validation to avoid re-hashing the password
     console.log("Refresh token saved to database");
 
-    // Set cookies with HttpOnly and Secure flags
+    // Define cookie options based on environment
+    const isProduction = process.env.NODE_ENV === "production";
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax", // Changed from strict to lax for better compatibility
+      secure: isProduction, // Secure flag mandatory for SameSite=None
+      sameSite: isProduction ? "none" : "lax", // Use None for cross-site in prod, Lax otherwise
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      // domain: isProduction ? ".onrender.com" : undefined, // Optional: Set domain if needed, but test without first
     };
+    console.log("Cookie options:", options); // Log options for debugging
 
     // Send tokens in cookies and response
     return res
@@ -232,14 +235,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       user._id
     );
 
-    // Set cookie options
+    // Define cookie options based on environment
+    const isProduction = process.env.NODE_ENV === "production";
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProduction, // Secure flag mandatory for SameSite=None
+      sameSite: isProduction ? "none" : "lax", // Use None for cross-site in prod, Lax otherwise
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      // domain: isProduction ? ".onrender.com" : undefined, // Optional: Set domain if needed, but test without first
     };
+    console.log("Refresh cookie options:", options); // Log options for debugging
 
     // Send new tokens
     return res
