@@ -214,15 +214,20 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     // Find user and include refreshToken field
     const user = await User.findById(decodedToken?._id).select("+refreshToken");
     if (!user) {
-      throw new ApiError(401, "Invalid refresh token");
+      throw new ApiError(401, "Invalid refresh token - User not found");
     }
 
     // Verify that the incoming refresh token matches the stored one
     if (incomingRefreshToken !== user.refreshToken) {
-      throw new ApiError(401, "Refresh token is expired or used");
+      console.error("Refresh Token Mismatch:", {
+        incoming: incomingRefreshToken,
+        stored: user.refreshToken,
+        userId: user._id,
+      });
+      throw new ApiError(401, "Refresh token is expired, used, or invalid");
     }
 
-    // Generate new tokens
+    // If the check passes, now generate new tokens
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
       user._id
     );
